@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Document Studio</title>
+<title>Rich Document Studio</title>
 <style>
 :root{--ink:#172033;--muted:#667085;--line:#d9dee8;--accent:#315efb;--bg:#f3f5f9}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Arial,"Noto Sans Oriya",sans-serif}
@@ -11,36 +11,73 @@ header{background:#172554;color:white;padding:16px 22px;display:flex;align-items
 header h1{font-size:20px;margin:0}header small{opacity:.8}
 button,select,input{font:inherit}button{border:1px solid var(--line);background:white;border-radius:7px;padding:8px 11px;cursor:pointer;color:#172033}
 button:hover{border-color:var(--accent)}button.primary{background:var(--accent);border-color:var(--accent);color:white}
+button.active-wrap{background:#e0e7ff;border-color:var(--accent);color:#1e3a8a;font-weight:bold}
 button:disabled{opacity:.5;cursor:not-allowed}
-.app{max-width:1500px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px}
+.app{max-width:1500px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}
 main,.side{min-width:0}.toolbar,.panel{background:white;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:12px}
-.toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:5;box-shadow:0 2px 8px #18233a0a}
-.toolbar select{max-width:150px}.toolbar input[type=color]{width:36px;height:34px;padding:2px;border:1px solid var(--line);border-radius:6px}
+.toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:25;box-shadow:0 2px 8px #18233a0a}
+.toolbar select{max-width:150px}.toolbar input[type=color]{width:36px;height:34px;padding:2px;border:1px solid var(--line);border-radius:6px;cursor:pointer}
 .toolbar button{min-width:35px;padding:7px}.separator{height:26px;border-left:1px solid var(--line);margin:0 3px}
-#editor{background:white;border:1px solid #cbd2df;box-shadow:0 5px 22px #18233a12;min-height:1120px;padding:25mm 20mm;margin:0 auto;max-width:210mm;width:100%;outline:none;overflow-wrap:anywhere}
+
+/* Editor Wrapper & 4 Margin Handles */
+.editor-container{position:relative;margin:0 auto;max-width:210mm;width:100%;background:white}
+#editor{background:white;border:1px solid #cbd2df;box-shadow:0 5px 22px #18233a12;min-height:1120px;padding:20mm;width:100%;outline:none;overflow-wrap:anywhere;position:relative;z-index:0}
 #editor:focus{border-color:#9bb0ff}
-#editor table{border-collapse:collapse;max-width:100%;width:auto}
-#editor td,#editor th{border:1px solid #555;padding:6px;min-width:25px;vertical-align:top}
-#editor img{max-width:100%;height:auto;cursor:pointer}
+#editor table{border-collapse:collapse;max-width:100%}
+#editor td,#editor th{padding:6px;min-width:25px;vertical-align:top;border:1px solid #666}
+#editor img{max-width:100%;height:auto;cursor:pointer;user-select:none}
 #editor p{margin:0 0 8px}
+
+/* 4-Side Margin Drag Bars */
+.margin-handle{position:absolute;z-index:10;user-select:none;opacity:0.45;transition:opacity 0.2s;background:#315efb}
+.margin-handle:hover,.margin-handle.active{opacity:1}
+.margin-handle-top{top:20mm;left:0;right:0;height:3px;cursor:ns-resize;border-top:1px dashed #fff}
+.margin-handle-bottom{bottom:20mm;left:0;right:0;height:3px;cursor:ns-resize;border-bottom:1px dashed #fff}
+.margin-handle-left{left:20mm;top:0;bottom:0;width:3px;cursor:ew-resize;border-left:1px dashed #fff}
+.margin-handle-right{right:20mm;top:0;bottom:0;width:3px;cursor:ew-resize;border-right:1px dashed #fff}
+
+.margin-handle span{position:absolute;background:#172554;color:white;font-size:10px;padding:2px 6px;border-radius:3px;white-space:nowrap;pointer-events:none}
+.margin-handle-top span{right:8px;top:-20px}
+.margin-handle-bottom span{right:8px;bottom:-20px}
+.margin-handle-left span{left:6px;top:8px}
+.margin-handle-right span{right:6px;top:8px}
+
+/* Image Overlay: Resize + Move + Wrap + Crop Toolbar */
+#imageResizerBox{position:absolute;border:2px solid var(--accent);box-sizing:border-box;pointer-events:none;z-index:18;display:none}
+.resizer-handle{position:absolute;width:12px;height:12px;background:#ffffff;border:2px solid var(--accent);border-radius:50%;pointer-events:all}
+.resizer-handle.nw{top:-6px;left:-6px;cursor:nwse-resize}
+.resizer-handle.ne{top:-6px;right:-6px;cursor:nesw-resize}
+.resizer-handle.sw{bottom:-6px;left:-6px;cursor:nesw-resize}
+.resizer-handle.se{bottom:-6px;right:-6px;cursor:nwse-resize}
+
+/* Floating Action Bar on Selected Image */
+.img-action-bar{position:absolute;top:-42px;left:50%;transform:translateX(-50%);background:#172554;color:white;border-radius:7px;padding:4px 6px;display:flex;gap:4px;align-items:center;pointer-events:all;box-shadow:0 4px 12px rgba(0,0,0,0.25);white-space:nowrap;font-size:11px}
+.img-action-bar button{background:transparent;color:white;border:0;padding:4px 6px;font-size:11px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:3px}
+.img-action-bar button:hover,.img-action-bar button.active{background:#315efb}
+#imgDragHandle{cursor:move;background:#2563eb;font-weight:bold}
+.wrap-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.wrap-grid button{font-size:12px;padding:6px 8px}
+
 .panel h3{font-size:15px;margin:0 0 10px}.panel label{display:block;font-size:13px;color:var(--muted);margin:9px 0 4px}
 .panel input,.panel select{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px}
 .row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
 .hint{font-size:12px;color:var(--muted);line-height:1.5}.status{font-size:12px;color:#16834a;margin-left:auto}
-#previewModal{display:none;position:fixed;inset:0;background:#111827bb;z-index:20;padding:20px}
+#previewModal{display:none;position:fixed;inset:0;background:#111827bb;z-index:40;padding:20px}
 .modal{background:#eef1f6;border-radius:10px;height:100%;max-width:1100px;margin:auto;display:flex;flex-direction:column;overflow:hidden}
-.modalhead{padding:12px;background:white;display:flex;justify-content:space-between;align-items:center}
-#previewFrame{border:0;background:white;width:100%;height:100%}
-#cropModal{display:none;position:fixed;inset:0;background:#111827bb;z-index:30;place-items:center;padding:20px}
+.modalhead{padding:12px;background:white;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
+#previewFrame{border:0;background:white;width:100%;flex:1}
+#cropModal{display:none;position:fixed;inset:0;background:#111827bb;z-index:50;place-items:center;padding:20px}
 .cropbox{background:white;padding:18px;border-radius:10px;max-width:700px;width:100%;max-height:95%;overflow:auto}
-#cropImage{max-width:100%;display:block;margin:12px auto}
+.crop-container{max-height:65vh;overflow:hidden;margin:12px 0;background:#f8fafc}
+#cropImage{max-width:100%;display:block;margin:0 auto}
 footer{max-width:1500px;margin:0 auto 20px;padding:0 16px;color:var(--muted);font-size:12px}
-@media(max-width:900px){.app{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.panel{margin:0}#editor{padding:15mm 12mm}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.panel{margin:0}}
 @media print{
  @page{size:A4;margin:20mm}
  body{background:white}
- header,.toolbar,.side,footer{display:none!important}
+ header,.toolbar,.side,footer,.margin-handle,#imageResizerBox{display:none!important}
  .app{display:block;margin:0;padding:0;max-width:none}
+ .editor-container{max-width:none;width:auto}
  #editor{border:0;box-shadow:none;max-width:none;width:auto;min-height:0;padding:0;margin:0;overflow:visible}
  #editor table{break-inside:auto}#editor tr{break-inside:avoid}
  #editor img{max-width:100%}
@@ -49,37 +86,186 @@ footer{max-width:1500px;margin:0 auto 20px;padding:0 16px;color:var(--muted);fon
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
 </head>
 <body>
-<header><div><h1>Document Studio</h1><small>Paste • Format • Preview • Export PDF / DOCX</small></div><div><button id="newBtn">New document</button> <button id="previewBtn" class="primary">Preview</button> <button id="pdfBtn" class="primary">Export PDF</button> <button id="docxBtn" class="primary">Export DOCX</button></div></header>
+<header>
+  <div><h1>Rich Document Studio</h1><small>Paste • Edit Any Text/Image • Text Wrapping • Preview & PDF</small></div>
+  <div>
+    <button type="button" id="newBtn">New Blank Page</button>
+    <button type="button" id="previewBtn" class="primary">Preview</button>
+    <button type="button" id="pdfBtn" class="primary">Export PDF</button>
+    <button type="button" id="docxBtn" class="primary">Export DOCX</button>
+  </div>
+</header>
+
 <div class="app">
 <main>
- <div class="toolbar" aria-label="Formatting toolbar">
-  <button data-cmd="undo" title="Undo">↶</button><button data-cmd="redo" title="Redo">↷</button><span class="separator"></span>
-  <select id="fontName" title="Font family"><option value="Arial">Arial</option><option value="Calibri">Calibri</option><option value="Times New Roman">Times New Roman</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="Noto Sans Oriya">Noto Sans Oriya</option><option value="Noto Serif Oriya">Noto Serif Oriya</option><option value="Nirmala UI">Nirmala UI</option></select>
-  <select id="fontSize" title="Font size"><option value="2">10 pt</option><option value="3" selected>12 pt</option><option value="4">14 pt</option><option value="5">18 pt</option><option value="6">24 pt</option><option value="7">36 pt</option></select>
-  <button data-cmd="bold"><b>B</b></button><button data-cmd="italic"><i>I</i></button><button data-cmd="underline"><u>U</u></button><button data-cmd="strikeThrough"><s>S</s></button><span class="separator"></span>
-  <label title="Text colour"><input type="color" id="foreColor" value="#172033"></label><label title="Highlight"><input type="color" id="hiliteColor" value="#fff2a8"></label>
-  <button data-cmd="justifyLeft" title="Align left">☰←</button><button data-cmd="justifyCenter" title="Center">☰</button><button data-cmd="justifyRight" title="Align right">→☰</button><button data-cmd="justifyFull" title="Justify">☷</button>
-  <button data-cmd="insertUnorderedList" title="Bullets">• List</button><button data-cmd="insertOrderedList" title="Numbering">1. List</button>
-  <select id="blockFormat" title="Paragraph style"><option value="P">Paragraph</option><option value="H1">Heading 1</option><option value="H2">Heading 2</option><option value="H3">Heading 3</option><option value="BLOCKQUOTE">Quote</option></select>
-  <span class="separator"></span><button id="linkBtn">Link</button><button id="tableBtn">Insert table</button><button id="imageBtn">Image</button><input id="imageFile" type="file" accept="image/*" hidden>
-  <span class="status" id="saveStatus">Auto-save ready</span>
+ <div class="toolbar" id="mainToolbar" aria-label="Formatting toolbar">
+  <button type="button" data-cmd="undo" title="Undo">↶</button>
+  <button type="button" data-cmd="redo" title="Redo">↷</button>
+  <span class="separator"></span>
+  <select id="fontName" title="Font family">
+    <option value="Arial">Arial</option>
+    <option value="Calibri">Calibri</option>
+    <option value="Times New Roman">Times New Roman</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Verdana">Verdana</option>
+    <option value="Noto Sans Oriya">Noto Sans Oriya</option>
+    <option value="Noto Serif Oriya">Noto Serif Oriya</option>
+    <option value="Nirmala UI">Nirmala UI</option>
+  </select>
+  <select id="fontSize" title="Font size">
+    <option value="10pt">10 pt</option>
+    <option value="12pt" selected>12 pt</option>
+    <option value="14pt">14 pt</option>
+    <option value="16pt">16 pt</option>
+    <option value="18pt">18 pt</option>
+    <option value="24pt">24 pt</option>
+    <option value="32pt">32 pt</option>
+    <option value="42pt">42 pt</option>
+    <option value="42pt">46 pt</option>
+  </select>
+  <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+  <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+  <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+  <button type="button" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+  <button type="button" id="clearFormatBtn" title="Clear locked formatting on selected text">Tx</button>
+  <span class="separator"></span>
+  <label title="Text colour"><input type="color" id="foreColor" value="#172033"></label>
+  <label title="Highlight"><input type="color" id="hiliteColor" value="#fff2a8"></label>
+  <button type="button" data-cmd="justifyLeft" title="Align left">☰←</button>
+  <button type="button" data-cmd="justifyCenter" title="Center">☰</button>
+  <button type="button" data-cmd="justifyRight" title="Align right">→☰</button>
+  <button type="button" data-cmd="justifyFull" title="Justify">☷</button>
+  <button type="button" data-cmd="insertUnorderedList" title="Bullets">• List</button>
+  <button type="button" data-cmd="insertOrderedList" title="Numbering">1. List</button>
+  <select id="blockFormat" title="Paragraph style">
+    <option value="P">Paragraph</option>
+    <option value="H1">Heading 1</option>
+    <option value="H2">Heading 2</option>
+    <option value="H3">Heading 3</option>
+    <option value="BLOCKQUOTE">Quote</option>
+  </select>
+  <span class="separator"></span>
+  <button type="button" id="linkBtn">Link</button>
+  <button type="button" id="tableBtn">Table</button>
+  <button type="button" id="imageBtn">Image</button>
+  <button type="button" id="cropBtn" title="Crop Selected Image">✂ Crop</button>
+  <input id="imageFile" type="file" accept="image/*" hidden>
+  <span class="status" id="saveStatus">Blank page ready</span>
  </div>
- <div id="editor" contenteditable="true" spellcheck="true" aria-label="Document editor" style="text-align:left"></div>
+
+ <div class="editor-container" id="editorContainer">
+  <!-- 4 Margin Drag Lines -->
+  <div class="margin-handle margin-handle-top" id="marginHandleTop" title="Drag Top Margin"><span>Top: 20mm</span></div>
+  <div class="margin-handle margin-handle-bottom" id="marginHandleBottom" title="Drag Bottom Margin"><span>Bottom: 20mm</span></div>
+  <div class="margin-handle margin-handle-left" id="marginHandleLeft" title="Drag Left Margin"><span>Left: 20mm</span></div>
+  <div class="margin-handle margin-handle-right" id="marginHandleRight" title="Drag Right Margin"><span>Right: 20mm</span></div>
+
+  <!-- Document Editor -->
+  <div id="editor" contenteditable="true" spellcheck="true" aria-label="Document editor" style="text-align:left"><p><br></p></div>
+
+  <!-- Image Resize, Move, Wrap & Crop Overlay Box -->
+  <div id="imageResizerBox">
+    <div class="img-action-bar">
+      <button type="button" id="imgDragHandle" title="Drag to move image anywhere">✥ Move</button>
+      <button type="button" data-wrap="inline" title="Inline with text">Inline</button>
+      <button type="button" data-wrap="left" title="Wrap text around right side">◧ Left</button>
+      <button type="button" data-wrap="right" title="Wrap text around left side">◨ Right</button>
+      <button type="button" data-wrap="behind" title="Behind text (ଅକ୍ଷର ପଛରେ)">⬇ Behind</button>
+      <button type="button" data-wrap="front" title="In front of text (ଅକ୍ଷର ଆଗରେ)">⬆ Front</button>
+      <button type="button" id="imgQuickCrop" title="Crop this image">✂ Crop</button>
+      <button type="button" id="imgDeleteBtn" title="Delete image" style="color:#ff8a8a">🗑</button>
+    </div>
+    <div class="resizer-handle nw" data-dir="nw"></div>
+    <div class="resizer-handle ne" data-dir="ne"></div>
+    <div class="resizer-handle sw" data-dir="sw"></div>
+    <div class="resizer-handle se" data-dir="se"></div>
+  </div>
+ </div>
 </main>
+
 <aside class="side">
- <section class="panel"><h3>ପୃଷ୍ଠା ସେଟିଂ</h3><label>Paper size</label><select id="paper"><option value="A4">A4 (210 × 297 mm)</option><option value="Letter">Letter</option></select><label>Page margins (mm)</label>
- <div class="row"><div><label for="marginTop">Top</label><input id="marginTop" type="number" min="0" max="60" value="20"></div><div><label for="marginBottom">Bottom</label><input id="marginBottom" type="number" min="0" max="60" value="20"></div></div>
- <div class="row"><div><label for="marginLeft">Left</label><input id="marginLeft" type="number" min="0" max="60" value="20"></div><div><label for="marginRight">Right</label><input id="marginRight" type="number" min="0" max="60" value="20"></div></div>
- <p class="hint">Top, Bottom, Left ଓ Right margin ଅଲଗା ଅଲଗା ଭାବେ mm ରେ ସେଟ୍ କରନ୍ତୁ। PDF ଓ DOCX export ରେ ଏହି ସେଟିଂ ବ୍ୟବହାର ହେବ।</p></section>
- <section class="panel"><h3>ଚିତ୍ର ସେଟିଂ</h3><label>ଚିତ୍ର ଚୟନ କରି Insert କରନ୍ତୁ</label><button id="chooseImage" class="primary" style="width:100%">Choose image</button><label>ଚିତ୍ରର ଆକାର</label><div class="row"><input id="imgWidth" type="number" min="1" max="180" placeholder="Width mm"><input id="imgHeight" type="number" min="1" max="250" placeholder="Height mm"></div><button id="applyImageSize" style="width:100%;margin-top:7px">Apply size to selected image</button><p class="hint">ଚିତ୍ର ଉପରେ କ୍ଲିକ୍ କରି Crop / Resize କରନ୍ତୁ।</p></section>
- <section class="panel"><h3>ଟେବୁଲ୍</h3><div class="row"><div><label>Rows</label><input id="rows" type="number" min="1" max="30" value="3"></div><div><label>Columns</label><input id="cols" type="number" min="1" max="15" value="3"></div></div><button id="insertTable" style="width:100%;margin-top:8px">Insert table at cursor</button><p class="hint">କପି କରାଯାଇଥିବା HTML ଟେବୁଲ୍‌ର border, cell alignment, colspan/rowspan ଇତ୍ୟାଦିକୁ ଯଥାସମ୍ଭବ ରଖାଯାଏ।</p></section>
- <section class="panel"><h3>ଡ୍ରାଫ୍ଟ</h3><button id="saveNow" style="width:100%">Save now</button><button id="restoreBtn" style="width:100%;margin-top:7px">Restore saved draft</button><button id="clearDraft" style="width:100%;margin-top:7px">Delete saved draft</button><p class="hint">Auto-save ଏହି ବ୍ରାଉଜରର local storage ରେ ହୁଏ। ଅନ୍ୟ ଡିଭାଇସ୍‌କୁ ନିଜେ ଯାଏ ନାହିଁ।</p></section>
+ <section class="panel">
+  <h3>ପୃଷ୍ଠା ସେଟିଂ (4 Margins)</h3>
+  <label>Paper size</label>
+  <select id="paper"><option value="A4">A4 (210 × 297 mm)</option><option value="Letter">Letter</option></select>
+  <label>Page margins (mm)</label>
+  <div class="row">
+    <div><label for="marginTop">Top</label><input id="marginTop" type="number" min="0" max="80" value="20"></div>
+    <div><label for="marginBottom">Bottom</label><input id="marginBottom" type="number" min="0" max="80" value="20"></div>
+  </div>
+  <div class="row">
+    <div><label for="marginLeft">Left</label><input id="marginLeft" type="number" min="0" max="80" value="20"></div>
+    <div><label for="marginRight">Right</label><input id="marginRight" type="number" min="0" max="80" value="20"></div>
+  </div>
+  <p class="hint">(Top, Bottom, Left, Right) ଟାଣି Margin କମ୍ ବା ଅଧିକ କରିପାରିବେ।</p>
+ </section>
+
+ <section class="panel">
+  <h3>ଚିତ୍ର ସେଟିଂ ଓ Text Wrapping</h3>
+  <button type="button" id="chooseImage" class="primary" style="width:100%">+ Choose & Insert Image</button>
+  
+  <label>Text Wrapping (ଚିତ୍ର ଓ ଅକ୍ଷର ସ୍ଥାନ)</label>
+  <div class="wrap-grid">
+    <button type="button" class="side-wrap-btn" data-wrap="inline">↩ Inline</button>
+    <button type="button" class="side-wrap-btn" data-wrap="left">◧ Wrap Left</button>
+    <button type="button" class="side-wrap-btn" data-wrap="right">◨ Wrap Right</button>
+    <button type="button" class="side-wrap-btn" data-wrap="behind">⬇ Behind Text</button>
+    <button type="button" class="side-wrap-btn" data-wrap="front" style="grid-column:span 2">⬆ In Front of Text (ଅକ୍ଷର ଉପରେ)</button>
+  </div>
+
+  <label>ଚିତ୍ରର ଆକାର (mm)</label>
+  <div class="row">
+    <input id="imgWidth" type="number" min="5" max="200" placeholder="Width mm">
+    <input id="imgHeight" type="number" min="5" max="280" placeholder="Height mm">
+  </div>
+  <button type="button" id="applyImageSize" style="width:100%;margin-top:7px">Apply Size</button>
+  <button type="button" id="sideCropBtn" style="width:100%;margin-top:7px">✂ Crop Selected Image</button>
+  <p class="hint">ପେଷ୍ଟ ହୋଇଥିବା କିମ୍ବା ଅପଲୋଡ୍ ହୋଇଥିବା ଯେକୌଣସି ଚିତ୍ର ଉପରେ କ୍ଲିକ୍ କରି Resize, Move, Wrap ଓ Crop କରିପାରିବେ।</p>
+ </section>
+
+ <section class="panel">
+  <h3>ଟେବୁଲ୍</h3>
+  <div class="row">
+    <div><label>Rows</label><input id="rows" type="number" min="1" max="30" value="3"></div>
+    <div><label>Columns</label><input id="cols" type="number" min="1" max="15" value="3"></div>
+  </div>
+  <button type="button" id="insertTable" style="width:100%;margin-top:8px">Insert table at cursor</button>
+ </section>
+
+ <section class="panel">
+  <h3>ଡ୍ରାଫ୍ଟ (Saved Work)</h3>
+  <button type="button" id="saveNow" style="width:100%">Save draft now</button>
+  <button type="button" id="restoreBtn" style="width:100%;margin-top:7px">Restore previous draft</button>
+  <button type="button" id="clearDraft" style="width:100%;margin-top:7px">Delete saved draft</button>
+ </section>
 </aside>
 </div>
-<footer>Jayanta Kumar</footer>
 
-<div id="previewModal"><div class="modal"><div class="modalhead"><b>Print preview</b><div><button id="printFromPreview" class="primary">Print / Save PDF</button> <button id="closePreview">Close</button></div></div><iframe id="previewFrame"></iframe></div></div>
-<div id="cropModal"><div class="cropbox"><h3>Crop image</h3><img id="cropImage" alt="Crop preview"><div class="row"><button id="cropApply" class="primary">Apply crop</button><button id="cropCancel">Cancel</button></div></div></div>
+<footer>ଟିପ୍ପଣୀ: ପେଷ୍ଟ ହୋଇଥିବା ଲେଖାକୁ Select କରି ଉପର Toolbar ସାହାଯ୍ୟରେ Font, Size, Color, Bold ଆଦି ସହଜରେ ବଦଳାଇ ପାରିବେ।</footer>
+
+<div id="previewModal">
+  <div class="modal">
+    <div class="modalhead">
+      <b>Document Print Preview</b>
+      <div>
+        <button type="button" id="printFromPreview" class="primary">🖨 Print / Save PDF</button>
+        <button type="button" id="closePreview">✕ Close</button>
+      </div>
+    </div>
+    <iframe id="previewFrame" title="Document Preview"></iframe>
+  </div>
+</div>
+
+<div id="cropModal">
+  <div class="cropbox">
+    <h3>Crop Image</h3>
+    <div class="crop-container"><img id="cropImage" alt="Crop preview"></div>
+    <div class="row">
+      <button type="button" id="cropApply" class="primary">✓ Apply Crop</button>
+      <button type="button" id="cropCancel">✕ Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -97,118 +283,755 @@ window.MathJax = {
 <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.3.1/html-docx.js"></script>
 <script>
-const editor=document.getElementById('editor'), statusEl=document.getElementById('saveStatus');
-let selectedImage=null,cropper=null,saveTimer=null;
-const STORAGE_KEY='richDocumentStudioDraftV1';
-function focusEditor(){editor.style.textAlign='left';editor.focus()}
-function exec(cmd,val=null){focusEditor();document.execCommand(cmd,false,val);scheduleSave()}
-document.querySelectorAll('[data-cmd]').forEach(b=>b.addEventListener('click',()=>exec(b.dataset.cmd)));
-document.getElementById('fontName').onchange=e=>exec('fontName',e.target.value);
-document.getElementById('fontSize').onchange=e=>exec('fontSize',e.target.value);
-document.getElementById('foreColor').oninput=e=>exec('foreColor',e.target.value);
-document.getElementById('hiliteColor').oninput=e=>{focusEditor();document.execCommand('hiliteColor',false,e.target.value);scheduleSave()};
-document.getElementById('blockFormat').onchange=e=>exec('formatBlock','<'+e.target.value+'>');
-document.getElementById('linkBtn').onclick=()=>{let u=prompt('Link URL (https://...)');if(u)exec('createLink',u)};
-function insertTable(){
- let r=Math.max(1,Math.min(30,+document.getElementById('rows').value||3)),c=Math.max(1,Math.min(15,+document.getElementById('cols').value||3));
- let t=document.createElement('table');t.style.borderCollapse='collapse';t.style.width='100%';
- for(let i=0;i<r;i++){let tr=t.insertRow();for(let j=0;j<c;j++){let td=tr.insertCell();td.innerHTML='&nbsp;';td.style.border='1px solid #555';td.style.padding='6px';}}
- focusEditor();document.execCommand('insertHTML',false,t.outerHTML+'<p><br></p>');scheduleSave()
-}
-document.getElementById('insertTable').onclick=insertTable;document.getElementById('tableBtn').onclick=insertTable;
-function chooseImage(){document.getElementById('imageFile').click()}
-document.getElementById('imageBtn').onclick=chooseImage;document.getElementById('chooseImage').onclick=chooseImage;
-document.getElementById('imageFile').onchange=e=>{
- const f=e.target.files[0];if(!f)return;
- const reader=new FileReader();reader.onload=()=>{let img=document.createElement('img');img.src=reader.result;img.style.maxWidth='100%';img.style.height='auto';img.dataset.original='1';focusEditor();document.execCommand('insertHTML',false,img.outerHTML+'<p><br></p>');scheduleSave();e.target.value=''};reader.readAsDataURL(f)
-};
-editor.addEventListener('click',e=>{if(e.target.tagName==='IMG'){selectedImage=e.target;document.getElementById('imgWidth').value=Math.round(selectedImage.getBoundingClientRect().width/3.7795);document.getElementById('imgHeight').value=Math.round(selectedImage.getBoundingClientRect().height/3.7795);openCropper(selectedImage)}});
-document.getElementById('applyImageSize').onclick=()=>{
- if(!selectedImage){alert('ପ୍ରଥମେ ଡକ୍ୟୁମେଣ୍ଟର ଏକ ଚିତ୍ର ଉପରେ କ୍ଲିକ୍ କରନ୍ତୁ।');return}
- const w=+document.getElementById('imgWidth').value,h=+document.getElementById('imgHeight').value;
- if(w>0)selectedImage.style.width=w+'mm';if(h>0)selectedImage.style.height=h+'mm';selectedImage.style.maxWidth='100%';scheduleSave()
-};
-function openCropper(img){
- if(!window.Cropper)return;
- document.getElementById('cropImage').src=img.src;document.getElementById('cropModal').style.display='grid';
- if(cropper)cropper.destroy();cropper=new Cropper(document.getElementById('cropImage'),{viewMode:1,autoCropArea:1,background:false});
-}
-document.getElementById('cropApply').onclick=()=>{
- if(!cropper||!selectedImage)return;selectedImage.src=cropper.getCroppedCanvas({maxWidth:3000,maxHeight:3000}).toDataURL('image/png');cropper.destroy();cropper=null;document.getElementById('cropModal').style.display='none';scheduleSave()
-};
-document.getElementById('cropCancel').onclick=()=>{if(cropper)cropper.destroy();cropper=null;document.getElementById('cropModal').style.display='none'};
-function scheduleSave(){statusEl.textContent='Saving…';clearTimeout(saveTimer);saveTimer=setTimeout(saveDraft,700)}
-function getMargins(){return {top:+document.getElementById('marginTop').value||0,bottom:+document.getElementById('marginBottom').value||0,left:+document.getElementById('marginLeft').value||0,right:+document.getElementById('marginRight').value||0}}
-function applyEditorMargins(){const m=getMargins();editor.style.padding=`${m.top}mm ${m.right}mm ${m.bottom}mm ${m.left}mm`}
-function saveDraft(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({html:editor.innerHTML,paper:document.getElementById('paper').value,margins:getMargins(),updated:new Date().toISOString()}));statusEl.textContent='Saved ✓'}catch(e){statusEl.textContent='Save failed (storage full)'}}
-editor.addEventListener('input',scheduleSave);
+const editor = document.getElementById('editor');
+const statusEl = document.getElementById('saveStatus');
+const editorContainer = document.getElementById('editorContainer');
+const resizerBox = document.getElementById('imageResizerBox');
+let selectedImage = null, cropper = null, saveTimer = null, savedRange = null;
+const STORAGE_KEY = 'richDocumentStudioDraftV1';
+const PX_PER_MM = 3.7795275591;
 
-// Smart Paste: keep rich HTML when the clipboard contains real formatting.
-// If the clipboard contains Markdown/LaTeX source (as in copied ChatGPT text),
-// convert Markdown to HTML and let MathJax typeset the equations.
-function looksLikeMarkdown(raw) {
- const t = raw.trim();
- return /(^|\n)\s{0,3}#{1,6}\s/.test(t) ||
-        /\*\*[^*]+\*\*|__[^_]+__|(^|\n)\s*[-*]\s+|(^|\n)\s*\d+\.\s+/.test(t) ||
-        /\$\$[\s\S]+?\$\$|\$[^$\n]+\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)/.test(t) ||
-        /(^|\n)\s*---+\s*(\n|$)/.test(t);
+// ================= SELECTION PRESERVATION FOR FORMATTING PASTED TEXT =================
+function saveSelection(){
+  const sel = window.getSelection();
+  if(sel.rangeCount > 0){
+    const r = sel.getRangeAt(0);
+    if(editor.contains(r.commonAncestorContainer)){
+      savedRange = r.cloneRange();
+    }
+  }
 }
-function cleanPastedHtml(html) {
- const doc = new DOMParser().parseFromString(html, 'text/html');
- doc.querySelectorAll('script,iframe,object,embed,meta,link').forEach(n => n.remove());
- doc.querySelectorAll('*').forEach(el => {
-   [...el.attributes].forEach(a => {
-     if (/^on/i.test(a.name) || (a.name === 'href' || a.name === 'src') && /^\s*javascript:/i.test(a.value)) el.removeAttribute(a.name);
-   });
- });
- return doc.body.innerHTML;
+
+function restoreSelection(){
+  editor.focus();
+  if(savedRange){
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+  }
 }
-async function typesetEditor(target=editor) {
- if (window.MathJax && MathJax.typesetPromise) {
-   try { await MathJax.typesetPromise([target]); } catch (err) { console.warn('MathJax typesetting issue:', err); }
- }
-}
-editor.addEventListener('paste', async e => {
- const cd = e.clipboardData;
- if (!cd) return;
- const plain = cd.getData('text/plain') || '';
- const html = cd.getData('text/html') || '';
- const htmlLooksLikeRawMarkdown = html && looksLikeMarkdown(new DOMParser().parseFromString(html, 'text/html').body.textContent || '');
- let content = '';
- if (html && !htmlLooksLikeRawMarkdown) {
-   content = cleanPastedHtml(html);
- } else if (plain && window.marked && looksLikeMarkdown(plain)) {
-   content = marked.parse(plain, { gfm: true, breaks: true });
- } else if (html) {
-   content = cleanPastedHtml(html);
- } else if (plain) {
-   // Preserve paragraph/line breaks even for ordinary unformatted copied text.
-   content = plain.split(/\n{2,}/).map(part => '<p>' + part.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>') + '</p>').join('');
- }
- if (!content) return;
- e.preventDefault();
- focusEditor();
- document.execCommand('insertHTML', false, content);
- await typesetEditor();
- scheduleSave();
+
+editor.addEventListener('keyup', saveSelection);
+editor.addEventListener('mouseup', saveSelection);
+editor.addEventListener('touchend', saveSelection);
+
+// Prevent toolbar buttons from stealing selection
+document.querySelectorAll('#mainToolbar button').forEach(btn=>{
+  btn.addEventListener('mousedown', e=>e.preventDefault());
 });
-editor.addEventListener('input', () => { typesetEditor(); scheduleSave(); });
-document.getElementById('saveNow').onclick=saveDraft;
-document.getElementById('restoreBtn').onclick=()=>{let d=localStorage.getItem(STORAGE_KEY);if(!d){alert('କୌଣସି saved draft ମିଳିଲା ନାହିଁ।');return}try{d=JSON.parse(d);editor.innerHTML=d.html||'';document.getElementById('paper').value=d.paper||'A4';if(typeof d.margins==='object'){for(const k of ['top','bottom','left','right'])document.getElementById('margin'+k[0].toUpperCase()+k.slice(1)).value=d.margins[k]??20}else{for(const k of ['Top','Bottom','Left','Right'])document.getElementById('margin'+k).value=d.margins||20}applyEditorMargins();statusEl.textContent='Draft restored ✓'}catch(e){alert('Draft ପଢ଼ିବାରେ ସମସ୍ୟା ହେଲା।')}};
-document.getElementById('clearDraft').onclick=()=>{if(confirm('Saved draft ଡିଲିଟ୍ କରିବେ?')){localStorage.removeItem(STORAGE_KEY);statusEl.textContent='Draft deleted'}};
-document.getElementById('newBtn').onclick=()=>{if(confirm('ନୂଆ ଡକ୍ୟୁମେଣ୍ଟ ଆରମ୍ଭ କରିବେ? ପ୍ରଥମେ ଡ୍ରାଫ୍ଟ save କରନ୍ତୁ।')){editor.innerHTML='<p style="text-align:left"><br></p>';editor.style.textAlign='left';scheduleSave()}};
-function documentHTML(){let paper=document.getElementById('paper').value,m=getMargins();let mathStyles=[...document.querySelectorAll('style')].filter(x=>x.textContent.includes('mjx-container')||x.hasAttribute('data-mjx')).map(x=>x.outerHTML).join('');return `<!DOCTYPE html><html><head><meta charset="utf-8">${mathStyles}<style>@page{size:${paper};margin:${m.top}mm ${m.right}mm ${m.bottom}mm ${m.left}mm}body{font-family:Arial,"Noto Sans Oriya",sans-serif;font-size:12pt;color:#172033}table{border-collapse:collapse;max-width:100%}td,th{vertical-align:top}img{max-width:100%;height:auto}p{orphans:2;widows:2}tr{break-inside:avoid}mjx-container{font-size:1em!important}</style></head><body>${editor.innerHTML}</body></html>`}
-function showPreview(){let frame=document.getElementById('previewFrame');frame.srcdoc=documentHTML();document.getElementById('previewModal').style.display='block'}
-document.getElementById('previewBtn').onclick=showPreview;document.getElementById('closePreview').onclick=()=>document.getElementById('previewModal').style.display='none';
-document.getElementById('printFromPreview').onclick=()=>{let f=document.getElementById('previewFrame');f.contentWindow.focus();f.contentWindow.print()};
-document.getElementById('pdfBtn').onclick=()=>{showPreview();setTimeout(()=>{let f=document.getElementById('previewFrame');f.onload=()=>{f.contentWindow.focus();f.contentWindow.print()};},100)};
-document.getElementById('docxBtn').onclick=()=>{
- if(!window.htmlDocx||!htmlDocx.asBlob){alert('DOCX library load ହୋଇନାହିଁ। Internet connection ଯାଞ୍ଚ କରନ୍ତୁ।');return}
- try{let blob=htmlDocx.asBlob(documentHTML());let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-document.docx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}catch(e){alert('DOCX export ହୋଇପାରିଲା ନାହିଁ: '+e.message)}
+
+// Override locked inline styles inside selected range when formatting pasted content
+function stripConflictingInlineStyles(propNames){
+  const sel = window.getSelection();
+  if(!sel.rangeCount || sel.isCollapsed) return;
+  const range = sel.getRangeAt(0);
+  const container = range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
+  if(!container || !editor.contains(container)) return;
+  container.querySelectorAll('*').forEach(el=>{
+    if(sel.containsNode(el, true) && el.style){
+      propNames.forEach(p=>el.style.removeProperty(p));
+    }
+  });
+}
+
+function exec(cmd, val=null){
+  restoreSelection();
+  if(cmd === 'foreColor') stripConflictingInlineStyles(['color']);
+  if(cmd === 'hiliteColor') stripConflictingInlineStyles(['background-color','background']);
+  if(cmd === 'fontName') stripConflictingInlineStyles(['font-family']);
+  if(cmd === 'bold') stripConflictingInlineStyles(['font-weight']);
+  if(cmd === 'italic') stripConflictingInlineStyles(['font-style']);
+  if(cmd.startsWith('justify')) stripConflictingInlineStyles(['text-align']);
+  document.execCommand('styleWithCSS', false, true);
+  document.execCommand(cmd, false, val);
+  saveSelection();
+  scheduleSave();
+}
+
+document.querySelectorAll('[data-cmd]').forEach(b=>b.addEventListener('click',()=>exec(b.dataset.cmd)));
+
+document.getElementById('fontName').addEventListener('change', e=>{
+  exec('fontName', e.target.value);
+});
+
+// Reliable Font Size formatting that works on pasted HTML as well
+document.getElementById('fontSize').addEventListener('change', e=>{
+  const sizeVal = e.target.value;
+  restoreSelection();
+  const sel = window.getSelection();
+  if(!sel.rangeCount) return;
+  if(!sel.isCollapsed){
+    stripConflictingInlineStyles(['font-size','line-height']);
+    document.execCommand('styleWithCSS', false, false);
+    document.execCommand('fontSize', false, '7');
+    editor.querySelectorAll('font[size="7"]').forEach(f=>{
+      const span = document.createElement('span');
+      span.style.fontSize = sizeVal;
+      span.innerHTML = f.innerHTML;
+      f.replaceWith(span);
+    });
+  }
+  saveSelection();
+  scheduleSave();
+});
+
+document.getElementById('foreColor').addEventListener('input', e=>exec('foreColor', e.target.value));
+document.getElementById('hiliteColor').addEventListener('input', e=>exec('hiliteColor', e.target.value));
+document.getElementById('blockFormat').addEventListener('change', e=>exec('formatBlock', '<'+e.target.value+'>'));
+
+// Clear locked formatting button
+document.getElementById('clearFormatBtn').addEventListener('click', ()=>{
+  restoreSelection();
+  stripConflictingInlineStyles(['color','background-color','background','font-family','font-size','font-weight','font-style','text-decoration']);
+  document.execCommand('removeFormat', false, null);
+  saveSelection();
+  scheduleSave();
+});
+
+document.getElementById('linkBtn').onclick = ()=>{
+  restoreSelection();
+  let u = prompt('Link URL (https://...)');
+  if(u) exec('createLink', u);
 };
-document.getElementById('paper').onchange=()=>{scheduleSave()};
-['marginTop','marginBottom','marginLeft','marginRight'].forEach(id=>document.getElementById(id).oninput=()=>{applyEditorMargins();scheduleSave()});
-window.addEventListener('beforeunload',saveDraft);
-try{let d=localStorage.getItem(STORAGE_KEY);if(d){d=JSON.parse(d);if(d.html){editor.innerHTML=d.html;document.getElementById('paper').value=d.paper||'A4';if(typeof d.margins==='object'&&d.margins){for(const k of ['top','bottom','left','right'])document.getElementById('margin'+k[0].toUpperCase()+k.slice(1)).value=d.margins[k]??20}else if(d.margins){for(const k of ['Top','Bottom','Left','Right'])document.getElementById('margin'+k).value=d.margins}applyEditorMargins();statusEl.textContent='Previous draft restored ✓';setTimeout(()=>typesetEditor(),500)}}}catch(e){}
+
+// Insert Table
+function insertTable(){
+  restoreSelection();
+  let r=Math.max(1,Math.min(30,+document.getElementById('rows').value||3)), c=Math.max(1,Math.min(15,+document.getElementById('cols').value||3));
+  let t=document.createElement('table'); t.style.borderCollapse='collapse'; t.style.width='100%';
+  for(let i=0;i<r;i++){
+    let tr=t.insertRow();
+    for(let j=0;j<c;j++){
+      let td=tr.insertCell(); td.innerHTML='&nbsp;'; td.style.border='1px solid #555'; td.style.padding='6px';
+    }
+  }
+  document.execCommand('insertHTML',false,t.outerHTML+'<p><br></p>');
+  saveSelection();
+  scheduleSave();
+}
+document.getElementById('insertTable').onclick=insertTable;
+document.getElementById('tableBtn').onclick=insertTable;
+
+// Prepare any pasted or inserted images so they can always be selected, moved, resized & cropped
+function normalizeEditorImages(){
+  editor.querySelectorAll('img').forEach(img=>{
+    img.removeAttribute('contenteditable');
+    img.removeAttribute('draggable');
+    img.style.pointerEvents = 'auto';
+    if(!img.dataset.wrap) img.dataset.wrap = 'inline';
+    // Convert external image with CORS if needed
+    img.crossOrigin = 'anonymous';
+  });
+}
+
+// Insert Image from file
+function chooseImage(){ document.getElementById('imageFile').click(); }
+document.getElementById('imageBtn').onclick=chooseImage;
+document.getElementById('chooseImage').onclick=chooseImage;
+document.getElementById('imageFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    restoreSelection();
+    let img=document.createElement('img');
+    img.src=reader.result;
+    img.style.width='65mm';
+    img.style.height='auto';
+    img.dataset.wrap='inline';
+    document.execCommand('insertHTML',false,img.outerHTML+'<p><br></p>');
+    normalizeEditorImages();
+    scheduleSave();
+    e.target.value='';
+  };
+  reader.readAsDataURL(f);
+};
+
+// ================= 1. IMAGE RESIZE, FREE MOVE, TEXT WRAPPING & CROP =================
+function highlightWrapButtons(mode){
+  document.querySelectorAll('[data-wrap]').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.wrap === mode);
+    btn.classList.toggle('active-wrap', btn.dataset.wrap === mode);
+  });
+}
+
+function setImageWrapMode(img, mode){
+  if(!img) return;
+  const edRect = editor.getBoundingClientRect();
+  const imgRect = img.getBoundingClientRect();
+  const currentLeft = Math.max(0, imgRect.left - edRect.left);
+  const currentTop = Math.max(0, imgRect.top - edRect.top);
+
+  img.dataset.wrap = mode;
+  img.style.float = 'none';
+  img.style.margin = '0';
+  img.style.position = '';
+  img.style.left = '';
+  img.style.top = '';
+  img.style.zIndex = '';
+
+  if(mode === 'inline'){
+    img.style.display = 'inline-block';
+    img.style.verticalAlign = 'middle';
+  } else if(mode === 'left'){
+    img.style.float = 'left';
+    img.style.margin = '4px 14px 8px 0';
+  } else if(mode === 'right'){
+    img.style.float = 'right';
+    img.style.margin = '4px 0 8px 14px';
+  } else if(mode === 'behind'){
+    img.style.position = 'absolute';
+    img.style.left = currentLeft + 'px';
+    img.style.top = currentTop + 'px';
+    img.style.zIndex = '-1';
+  } else if(mode === 'front'){
+    img.style.position = 'absolute';
+    img.style.left = currentLeft + 'px';
+    img.style.top = currentTop + 'px';
+    img.style.zIndex = '8';
+  }
+  highlightWrapButtons(mode);
+  updateResizerPosition();
+  scheduleSave();
+}
+
+document.querySelectorAll('[data-wrap]').forEach(btn=>{
+  btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    if(!selectedImage){
+      alert('ପ୍ରଥମେ ଡକ୍ୟୁମେଣ୍ଟର ଏକ ଚିତ୍ର ଉପରେ କ୍ଲିକ୍ କରନ୍ତୁ।');
+      return;
+    }
+    setImageWrapMode(selectedImage, btn.dataset.wrap);
+  });
+});
+
+function updateResizerPosition(){
+  if(!selectedImage || !editor.contains(selectedImage)){
+    selectedImage = null;
+    resizerBox.style.display='none';
+    highlightWrapButtons('');
+    return;
+  }
+  const eRect = editorContainer.getBoundingClientRect();
+  const iRect = selectedImage.getBoundingClientRect();
+  resizerBox.style.display='block';
+  resizerBox.style.top = (iRect.top - eRect.top) + 'px';
+  resizerBox.style.left = (iRect.left - eRect.left) + 'px';
+  resizerBox.style.width = iRect.width + 'px';
+  resizerBox.style.height = iRect.height + 'px';
+  document.getElementById('imgWidth').value = Math.round(iRect.width / PX_PER_MM);
+  document.getElementById('imgHeight').value = Math.round(iRect.height / PX_PER_MM);
+  highlightWrapButtons(selectedImage.dataset.wrap || 'inline');
+}
+
+editor.addEventListener('mousedown', e=>{
+  let targetImg = null;
+  if(e.target.tagName === 'IMG'){
+    targetImg = e.target;
+  } else {
+    const imgs = editor.querySelectorAll('img[data-wrap="behind"]');
+    for(const img of imgs){
+      const r = img.getBoundingClientRect();
+      if(e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom){
+        targetImg = img;
+        break;
+      }
+    }
+  }
+
+  if(targetImg){
+    e.preventDefault(); // Prevents browser native image drag ghosting
+    selectedImage = targetImg;
+    updateResizerPosition();
+    startImageFreeMove(e);
+  } else {
+    selectedImage = null;
+    resizerBox.style.display='none';
+    highlightWrapButtons('');
+  }
+});
+
+editor.addEventListener('dblclick', e=>{
+  if(e.target.tagName === 'IMG'){
+    selectedImage = e.target;
+    openCropper(selectedImage);
+  }
+});
+
+function startImageFreeMove(e){
+  if(e.button !== 0 || !selectedImage) return;
+  const startMouseX = e.clientX;
+  const startMouseY = e.clientY;
+  const edRect = editor.getBoundingClientRect();
+  const imgRect = selectedImage.getBoundingClientRect();
+  const initLeft = imgRect.left - edRect.left;
+  const initTop = imgRect.top - edRect.top;
+  let moved = false;
+
+  function onMove(ev){
+    const dx = ev.clientX - startMouseX;
+    const dy = ev.clientY - startMouseY;
+    if(Math.abs(dx) > 4 || Math.abs(dy) > 4){
+      moved = true;
+      const curWrap = selectedImage.dataset.wrap || 'inline';
+      if(curWrap !== 'behind' && curWrap !== 'front'){
+        selectedImage.dataset.wrap = 'front';
+        selectedImage.style.float = 'none';
+        selectedImage.style.margin = '0';
+        selectedImage.style.zIndex = '8';
+      }
+      selectedImage.style.position = 'absolute';
+      let newLeft = Math.max(0, Math.min(edRect.width - imgRect.width, initLeft + dx));
+      let newTop = Math.max(0, initTop + dy);
+      selectedImage.style.left = newLeft + 'px';
+      selectedImage.style.top = newTop + 'px';
+      updateResizerPosition();
+    }
+  }
+  function onUp(){
+    window.removeEventListener('mousemove', onMove);
+    window.removeEventListener('mouseup', onUp);
+    if(moved) scheduleSave();
+  }
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+}
+
+document.getElementById('imgDragHandle').addEventListener('mousedown', e=>{
+  e.preventDefault();
+  e.stopPropagation();
+  startImageFreeMove(e);
+});
+
+document.getElementById('imgDeleteBtn').onclick = e=>{
+  e.stopPropagation();
+  if(!selectedImage) return;
+  selectedImage.remove();
+  selectedImage = null;
+  resizerBox.style.display = 'none';
+  scheduleSave();
+};
+
+document.querySelectorAll('.resizer-handle').forEach(h=>{
+  h.addEventListener('mousedown', e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    if(!selectedImage) return;
+    const dir = e.target.dataset.dir;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startW = selectedImage.getBoundingClientRect().width;
+    const startH = selectedImage.getBoundingClientRect().height;
+
+    function onMouseMove(ev){
+      let dx = ev.clientX - startX;
+      let dy = ev.clientY - startY;
+      let newW = (dir==='se'||dir==='ne') ? startW + dx : startW - dx;
+      let newH = (dir==='se'||dir==='sw') ? startH + dy : startH - dy;
+      if(newW > 25){
+        selectedImage.removeAttribute('width');
+        selectedImage.style.width = newW + 'px';
+      }
+      if(newH > 25){
+        selectedImage.removeAttribute('height');
+        selectedImage.style.height = newH + 'px';
+      }
+      updateResizerPosition();
+    }
+    function onMouseUp(){
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      scheduleSave();
+    }
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  });
+});
+
+window.addEventListener('resize', updateResizerPosition);
+window.addEventListener('scroll', updateResizerPosition);
+
+document.getElementById('applyImageSize').onclick=()=>{
+  if(!selectedImage){ alert('ପ୍ରଥମେ ଡକ୍ୟୁମେଣ୍ଟର ଏକ ଚିତ୍ର ଉପରେ କ୍ଲିକ୍ କରନ୍ତୁ।'); return; }
+  const w=+document.getElementById('imgWidth').value, h=+document.getElementById('imgHeight').value;
+  selectedImage.removeAttribute('width');
+  selectedImage.removeAttribute('height');
+  if(w>0) selectedImage.style.width = w+'mm';
+  if(h>0) selectedImage.style.height = h+'mm';
+  updateResizerPosition();
+  scheduleSave();
+};
+
+// Crop Modal Logic
+function triggerCrop(){
+  if(!selectedImage){ alert('Crop କରିବା ପାଇଁ ପ୍ରଥମେ ଗୋଟିଏ ଚିତ୍ର ଉପରେ କ୍ଲିକ୍ କରନ୍ତୁ।'); return; }
+  openCropper(selectedImage);
+}
+document.getElementById('cropBtn').onclick = triggerCrop;
+document.getElementById('sideCropBtn').onclick = triggerCrop;
+document.getElementById('imgQuickCrop').onclick = e=>{ e.stopPropagation(); triggerCrop(); };
+
+function openCropper(img){
+  if(!window.Cropper){ alert('Cropper library load ହୋଇନାହିଁ।'); return; }
+  const cropImg = document.getElementById('cropImage');
+  document.getElementById('cropModal').style.display = 'grid';
+  if(cropper){ cropper.destroy(); cropper = null; }
+  cropImg.onload = ()=>{
+    if(cropper) cropper.destroy();
+    cropper = new Cropper(cropImg, {
+      viewMode: 1,
+      autoCropArea: 0.9,
+      responsive: true,
+      background: false
+    });
+  };
+  cropImg.src = img.src;
+}
+
+document.getElementById('cropApply').onclick=()=>{
+  if(!cropper || !selectedImage) return;
+  try{
+    const canvas = cropper.getCroppedCanvas({ maxWidth: 2500, maxHeight: 2500 });
+    if(canvas){
+      selectedImage.src = canvas.toDataURL('image/png');
+      selectedImage.style.height = 'auto';
+    }
+  }catch(err){
+    alert('ବାହାର ୱେବସାଇଟ୍‌ର ସୁରକ୍ଷା (CORS) ଯୋଗୁଁ ଏହି ଚିତ୍ରକୁ ସିଧା Crop କରିହେବ ନାହିଁ। ଚିତ୍ରକୁ ଡିଭାଇସ୍‌ରେ Save କରି Insert କରନ୍ତୁ।');
+  }
+  cropper.destroy(); cropper = null;
+  document.getElementById('cropModal').style.display = 'none';
+  setTimeout(updateResizerPosition, 60);
+  scheduleSave();
+};
+document.getElementById('cropCancel').onclick=()=>{
+  if(cropper) cropper.destroy(); cropper = null;
+  document.getElementById('cropModal').style.display = 'none';
+};
+
+// ================= 2. 4-SIDE MARGIN RESIZE DRAG PANEL =================
+const handleTop = document.getElementById('marginHandleTop');
+const handleBottom = document.getElementById('marginHandleBottom');
+const handleLeft = document.getElementById('marginHandleLeft');
+const handleRight = document.getElementById('marginHandleRight');
+
+function getMargins(){
+  return {
+    top: +document.getElementById('marginTop').value || 0,
+    bottom: +document.getElementById('marginBottom').value || 0,
+    left: +document.getElementById('marginLeft').value || 0,
+    right: +document.getElementById('marginRight').value || 0
+  };
+}
+
+function updateMarginHandlesUI(){
+  const m = getMargins();
+  handleTop.style.top = m.top + 'mm';
+  handleTop.querySelector('span').textContent = `Top: ${m.top}mm`;
+  handleBottom.style.bottom = m.bottom + 'mm';
+  handleBottom.querySelector('span').textContent = `Bottom: ${m.bottom}mm`;
+  handleLeft.style.left = m.left + 'mm';
+  handleLeft.querySelector('span').textContent = `Left: ${m.left}mm`;
+  handleRight.style.right = m.right + 'mm';
+  handleRight.querySelector('span').textContent = `Right: ${m.right}mm`;
+}
+
+function applyEditorMargins(){
+  const m = getMargins();
+  editor.style.padding = `${m.top}mm ${m.right}mm ${m.bottom}mm ${m.left}mm`;
+  updateMarginHandlesUI();
+  updateResizerPosition();
+}
+
+function setupMarginDrag(handleEl, inputId, side){
+  const inputEl = document.getElementById(inputId);
+  handleEl.addEventListener('mousedown', e=>{
+    e.preventDefault();
+    handleEl.classList.add('active');
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startVal = +inputEl.value || 0;
+
+    function onDrag(ev){
+      let deltaPx = 0;
+      if(side === 'top') deltaPx = ev.clientY - startY;
+      else if(side === 'bottom') deltaPx = startY - ev.clientY;
+      else if(side === 'left') deltaPx = ev.clientX - startX;
+      else if(side === 'right') deltaPx = startX - ev.clientX;
+
+      let newVal = Math.round(startVal + (deltaPx / PX_PER_MM));
+      newVal = Math.max(0, Math.min(80, newVal));
+      inputEl.value = newVal;
+      applyEditorMargins();
+    }
+    function onStop(){
+      handleEl.classList.remove('active');
+      window.removeEventListener('mousemove', onDrag);
+      window.removeEventListener('mouseup', onStop);
+      scheduleSave();
+    }
+    window.addEventListener('mousemove', onDrag);
+    window.addEventListener('mouseup', onStop);
+  });
+}
+
+setupMarginDrag(handleTop, 'marginTop', 'top');
+setupMarginDrag(handleBottom, 'marginBottom', 'bottom');
+setupMarginDrag(handleLeft, 'marginLeft', 'left');
+setupMarginDrag(handleRight, 'marginRight', 'right');
+
+['marginTop','marginBottom','marginLeft','marginRight'].forEach(id=>{
+  document.getElementById(id).oninput = ()=>{ applyEditorMargins(); scheduleSave(); };
+});
+
+// ================= 3. EXACT FORMAT PASTE (EDITABLE) & RELIABLE PREVIEW =================
+function scheduleSave(){
+  statusEl.textContent='Saving…';
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveDraft,700);
+}
+function saveDraft(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      html: editor.innerHTML,
+      paper: document.getElementById('paper').value,
+      margins: getMargins(),
+      updated: new Date().toISOString()
+    }));
+    statusEl.textContent='Saved to draft ✓';
+  }catch(e){
+    statusEl.textContent='Save failed';
+  }
+}
+
+function looksLikeMarkdown(raw){
+  const t=raw.trim();
+  return /(^|\n)\s{0,3}#{1,6}\s/.test(t) ||
+         /\*\*[^*]+\*\*|__[^_]+__|(^|\n)\s*[-*]\s+|(^|\n)\s*\d+\.\s+/.test(t) ||
+         /\$\$[\s\S]+?\$\$|\$[^$\n]+\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)/.test(t);
+}
+
+// Keep visual formatting from pasted HTML while ensuring all pasted nodes & images remain 100% editable
+function sanitizeAndMakeEditableHtml(html){
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('script,iframe,object,embed,meta,link').forEach(n=>n.remove());
+  doc.querySelectorAll('*').forEach(el=>{
+    // Unlock any non-editable attributes from copied websites/Word
+    el.removeAttribute('contenteditable');
+    if(el.style){
+      el.style.removeProperty('user-select');
+      el.style.removeProperty('-webkit-user-select');
+      el.style.removeProperty('pointer-events');
+      // Remove "!important" locks so user can re-format later
+      const rawStyle = el.getAttribute('style');
+      if(rawStyle && rawStyle.includes('!important')){
+        el.setAttribute('style', rawStyle.replace(/!important/gi, ''));
+      }
+    }
+    [...el.attributes].forEach(a=>{
+      if(/^on/i.test(a.name) || ((a.name==='href'||a.name==='src') && /^\s*javascript:/i.test(a.value))){
+        el.removeAttribute(a.name);
+      }
+    });
+  });
+  return doc.body.innerHTML;
+}
+
+async function typesetEditor(target=editor){
+  if(window.MathJax && MathJax.typesetPromise){
+    try{ await MathJax.typesetPromise([target]); }catch(err){}
+  }
+}
+
+editor.addEventListener('paste', async e=>{
+  const cd = e.clipboardData;
+  if(!cd) return;
+
+  // Direct image paste from clipboard (screenshots / copied images)
+  const items = cd.items ? [...cd.items] : [];
+  const imgItem = items.find(it => it.type && it.type.startsWith('image/'));
+  if(imgItem){
+    const file = imgItem.getAsFile();
+    if(file){
+      e.preventDefault();
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        let img = document.createElement('img');
+        img.src = reader.result;
+        img.style.width = '65mm';
+        img.dataset.wrap = 'inline';
+        editor.focus();
+        document.execCommand('insertHTML', false, img.outerHTML);
+        normalizeEditorImages();
+        scheduleSave();
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+  }
+
+  const html = cd.getData('text/html') || '';
+  const plain = cd.getData('text/plain') || '';
+
+  e.preventDefault();
+  editor.focus();
+
+  if(html && html.trim() !== ''){
+    const editableRichHtml = sanitizeAndMakeEditableHtml(html);
+    document.execCommand('insertHTML', false, editableRichHtml);
+  } else if(plain && window.marked && looksLikeMarkdown(plain)){
+    const mdHtml = marked.parse(plain, { gfm: true, breaks: true });
+    document.execCommand('insertHTML', false, mdHtml);
+  } else if(plain){
+    const escaped = plain
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;')
+      .replace(/  /g, ' &nbsp;')
+      .replace(/\r?\n/g, '<br>');
+    document.execCommand('insertHTML', false, escaped);
+  }
+
+  normalizeEditorImages();
+  saveSelection();
+  if(/\$|\\\[|\\\(/.test(plain)){
+    await typesetEditor();
+  }
+  scheduleSave();
+});
+
+// Do NOT run MathJax on every keystroke so cursor/selection never breaks
+editor.addEventListener('input', ()=>{
+  updateResizerPosition();
+  scheduleSave();
+});
+
+document.getElementById('saveNow').onclick = saveDraft;
+document.getElementById('restoreBtn').onclick = ()=>{
+  let d = localStorage.getItem(STORAGE_KEY);
+  if(!d){ alert('କୌଣସି saved draft ମିଳିଲା ନାହିଁ।'); return; }
+  try{
+    d = JSON.parse(d);
+    editor.innerHTML = d.html || '<p><br></p>';
+    document.getElementById('paper').value = d.paper || 'A4';
+    if(typeof d.margins === 'object' && d.margins){
+      for(const k of ['top','bottom','left','right']){
+        document.getElementById('margin'+k[0].toUpperCase()+k.slice(1)).value = d.margins[k] ?? 20;
+      }
+    }
+    normalizeEditorImages();
+    applyEditorMargins();
+    statusEl.textContent = 'Draft restored ✓';
+  }catch(e){ alert('Draft ପଢ଼ିବାରେ ସମସ୍ୟା ହେଲା।'); }
+};
+
+document.getElementById('clearDraft').onclick = ()=>{
+  if(confirm('Saved draft ଡିଲିଟ୍ କରିବେ?')){
+    localStorage.removeItem(STORAGE_KEY);
+    statusEl.textContent = 'Draft deleted';
+  }
+};
+
+function startNewBlankPage(){
+  editor.innerHTML = '<p style="text-align:left"><br></p>';
+  editor.style.textAlign = 'left';
+  selectedImage = null;
+  resizerBox.style.display = 'none';
+  applyEditorMargins();
+  statusEl.textContent = 'New blank page ready';
+}
+
+document.getElementById('newBtn').onclick = ()=>{
+  if(editor.innerText.trim().length > 0 || editor.querySelector('img,table')){
+    if(!confirm('ନୂଆ ଖାଲି ପୃଷ୍ଠା (Blank Page) ଖୋଲିବେ କି?')) return;
+  }
+  startNewBlankPage();
+};
+
+// Build clean, complete HTML for Preview, PDF & DOCX
+function documentHTML(){
+  let paper = document.getElementById('paper').value, m = getMargins();
+  let mathStyles = [...document.querySelectorAll('style')]
+    .filter(x=>x.textContent.includes('mjx-container')||x.hasAttribute('data-mjx'))
+    .map(x=>x.outerHTML).join('');
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+${mathStyles}
+<style>
+  @page { size: ${paper}; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: ${m.top}mm ${m.right}mm ${m.bottom}mm ${m.left}mm;
+    position: relative;
+    z-index: 0;
+    min-height: 297mm;
+    background: white;
+    font-family: Arial, "Noto Sans Oriya", sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #172033;
+    overflow-wrap: anywhere;
+  }
+  table { border-collapse: collapse; max-width: 100%; }
+  td, th { vertical-align: top; padding: 6px; border: 1px solid #666; }
+  img { max-width: 100%; height: auto; }
+  p { orphans: 2; widows: 2; margin: 0 0 8px; }
+  tr { break-inside: avoid; }
+  mjx-container { font-size: 1em !important; }
+</style>
+</head>
+<body>${editor.innerHTML}</body>
+</html>`;
+}
+
+// Reliable Preview using direct iframe document writing (works even with large base64 images)
+function showPreview(autoPrint = false){
+  const modal = document.getElementById('previewModal');
+  const frame = document.getElementById('previewFrame');
+  modal.style.display = 'block';
+
+  const htmlContent = documentHTML();
+  const doc = frame.contentDocument || frame.contentWindow.document;
+  doc.open();
+  doc.write(htmlContent);
+  doc.close();
+
+  if(autoPrint){
+    setTimeout(()=>{
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+    }, 350);
+  }
+}
+
+document.getElementById('previewBtn').onclick = () => showPreview(false);
+document.getElementById('pdfBtn').onclick = () => showPreview(true);
+document.getElementById('closePreview').onclick = () => {
+  document.getElementById('previewModal').style.display = 'none';
+};
+document.getElementById('printFromPreview').onclick = () => {
+  const f = document.getElementById('previewFrame');
+  f.contentWindow.focus();
+  f.contentWindow.print();
+};
+
+document.getElementById('docxBtn').onclick = ()=>{
+  if(!window.htmlDocx || !htmlDocx.asBlob){ alert('DOCX library load ହୋଇନାହିଁ।'); return; }
+  try{
+    let blob = htmlDocx.asBlob(documentHTML());
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'my-document.docx';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  }catch(e){ alert('DOCX export ହୋଇପାରିଲା ନାହିଁ: '+e.message); }
+};
+
+window.addEventListener('DOMContentLoaded', startNewBlankPage);
 </script>
-</body></html>
+</body>
+</html>
