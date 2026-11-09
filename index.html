@@ -64,7 +64,7 @@ footer{max-width:1500px;margin:0 auto 20px;padding:0 16px;color:var(--muted);fon
   <span class="separator"></span><button id="linkBtn">Link</button><button id="tableBtn">Insert table</button><button id="imageBtn">Image</button><input id="imageFile" type="file" accept="image/*" hidden>
   <span class="status" id="saveStatus">Auto-save ready</span>
  </div>
- <div id="editor" contenteditable="true" spellcheck="true" aria-label="Document editor"><h2 style="text-align:center">ଆପଣଙ୍କ ଡକ୍ୟୁମେଣ୍ଟ ଏଠାରେ ଆରମ୍ଭ କରନ୍ତୁ</h2><p>ଏଠାରେ ଟେକ୍ସଟ୍ ପେଷ୍ଟ କରନ୍ତୁ କିମ୍ବା ଟାଇପ୍ କରନ୍ତୁ। ChatGPT ରୁ କପି କରାଯାଇଥିବା ଫର୍ମାଟେଡ୍ ଟେକ୍ସଟ୍ ଓ ଟେବୁଲ୍ ପେଷ୍ଟ କରିବାକୁ ଚେଷ୍ଟା କରନ୍ତୁ।</p></div>
+ <div id="editor" contenteditable="true" spellcheck="true" aria-label="Document editor" style="text-align:left"></div>
 </main>
 <aside class="side">
  <section class="panel"><h3>ପୃଷ୍ଠା ସେଟିଂ</h3><label>Paper size</label><select id="paper"><option value="A4">A4 (210 × 297 mm)</option><option value="Letter">Letter</option></select><label>Page margins (mm)</label>
@@ -100,7 +100,7 @@ window.MathJax = {
 const editor=document.getElementById('editor'), statusEl=document.getElementById('saveStatus');
 let selectedImage=null,cropper=null,saveTimer=null;
 const STORAGE_KEY='richDocumentStudioDraftV1';
-function focusEditor(){editor.focus()}
+function focusEditor(){editor.style.textAlign='left';editor.focus()}
 function exec(cmd,val=null){focusEditor();document.execCommand(cmd,false,val);scheduleSave()}
 document.querySelectorAll('[data-cmd]').forEach(b=>b.addEventListener('click',()=>exec(b.dataset.cmd)));
 document.getElementById('fontName').onchange=e=>exec('fontName',e.target.value);
@@ -196,7 +196,7 @@ editor.addEventListener('input', () => { typesetEditor(); scheduleSave(); });
 document.getElementById('saveNow').onclick=saveDraft;
 document.getElementById('restoreBtn').onclick=()=>{let d=localStorage.getItem(STORAGE_KEY);if(!d){alert('କୌଣସି saved draft ମିଳିଲା ନାହିଁ।');return}try{d=JSON.parse(d);editor.innerHTML=d.html||'';document.getElementById('paper').value=d.paper||'A4';if(typeof d.margins==='object'){for(const k of ['top','bottom','left','right'])document.getElementById('margin'+k[0].toUpperCase()+k.slice(1)).value=d.margins[k]??20}else{for(const k of ['Top','Bottom','Left','Right'])document.getElementById('margin'+k).value=d.margins||20}applyEditorMargins();statusEl.textContent='Draft restored ✓'}catch(e){alert('Draft ପଢ଼ିବାରେ ସମସ୍ୟା ହେଲା।')}};
 document.getElementById('clearDraft').onclick=()=>{if(confirm('Saved draft ଡିଲିଟ୍ କରିବେ?')){localStorage.removeItem(STORAGE_KEY);statusEl.textContent='Draft deleted'}};
-document.getElementById('newBtn').onclick=()=>{if(confirm('ନୂଆ ଡକ୍ୟୁମେଣ୍ଟ ଆରମ୍ଭ କରିବେ? ପ୍ରଥମେ ଡ୍ରାଫ୍ଟ save କରନ୍ତୁ।')){editor.innerHTML='<p><br></p>';scheduleSave()}};
+document.getElementById('newBtn').onclick=()=>{if(confirm('ନୂଆ ଡକ୍ୟୁମେଣ୍ଟ ଆରମ୍ଭ କରିବେ? ପ୍ରଥମେ ଡ୍ରାଫ୍ଟ save କରନ୍ତୁ।')){editor.innerHTML='<p style="text-align:left"><br></p>';editor.style.textAlign='left';scheduleSave()}};
 function documentHTML(){let paper=document.getElementById('paper').value,m=getMargins();let mathStyles=[...document.querySelectorAll('style')].filter(x=>x.textContent.includes('mjx-container')||x.hasAttribute('data-mjx')).map(x=>x.outerHTML).join('');return `<!DOCTYPE html><html><head><meta charset="utf-8">${mathStyles}<style>@page{size:${paper};margin:${m.top}mm ${m.right}mm ${m.bottom}mm ${m.left}mm}body{font-family:Arial,"Noto Sans Oriya",sans-serif;font-size:12pt;color:#172033}table{border-collapse:collapse;max-width:100%}td,th{vertical-align:top}img{max-width:100%;height:auto}p{orphans:2;widows:2}tr{break-inside:avoid}mjx-container{font-size:1em!important}</style></head><body>${editor.innerHTML}</body></html>`}
 function showPreview(){let frame=document.getElementById('previewFrame');frame.srcdoc=documentHTML();document.getElementById('previewModal').style.display='block'}
 document.getElementById('previewBtn').onclick=showPreview;document.getElementById('closePreview').onclick=()=>document.getElementById('previewModal').style.display='none';
