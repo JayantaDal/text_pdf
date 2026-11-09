@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="or">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rich Document Studio</title>
+<style>
+:root{--ink:#172033;--muted:#667085;--line:#d9dee8;--accent:#315efb;--bg:#f3f5f9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Arial,"Noto Sans Oriya",sans-serif}
+header{background:#172554;color:white;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{font-size:20px;margin:0}header small{opacity:.8}
+button,select,input{font:inherit}button{border:1px solid var(--line);background:white;border-radius:7px;padding:8px 11px;cursor:pointer;color:#172033}
+button:hover{border-color:var(--accent)}button.primary{background:var(--accent);border-color:var(--accent);color:white}
+button:disabled{opacity:.5;cursor:not-allowed}
+.app{max-width:1500px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px}
+main,.side{min-width:0}.toolbar,.panel{background:white;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:12px}
+.toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:5;box-shadow:0 2px 8px #18233a0a}
+.toolbar select{max-width:150px}.toolbar input[type=color]{width:36px;height:34px;padding:2px;border:1px solid var(--line);border-radius:6px}
+.toolbar button{min-width:35px;padding:7px}.separator{height:26px;border-left:1px solid var(--line);margin:0 3px}
+#editor{background:white;border:1px solid #cbd2df;box-shadow:0 5px 22px #18233a12;min-height:1120px;padding:25mm 20mm;margin:0 auto;max-width:210mm;width:100%;outline:none;overflow-wrap:anywhere}
+#editor:focus{border-color:#9bb0ff}
+#editor table{border-collapse:collapse;max-width:100%;width:auto}
+#editor td,#editor th{border:1px solid #555;padding:6px;min-width:25px;vertical-align:top}
+#editor img{max-width:100%;height:auto;cursor:pointer}
+#editor p{margin:0 0 8px}
+.panel h3{font-size:15px;margin:0 0 10px}.panel label{display:block;font-size:13px;color:var(--muted);margin:9px 0 4px}
+.panel input,.panel select{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}.status{font-size:12px;color:#16834a;margin-left:auto}
+#previewModal{display:none;position:fixed;inset:0;background:#111827bb;z-index:20;padding:20px}
+.modal{background:#eef1f6;border-radius:10px;height:100%;max-width:1100px;margin:auto;display:flex;flex-direction:column;overflow:hidden}
+.modalhead{padding:12px;background:white;display:flex;justify-content:space-between;align-items:center}
+#previewFrame{border:0;background:white;width:100%;height:100%}
+#cropModal{display:none;position:fixed;inset:0;background:#111827bb;z-index:30;place-items:center;padding:20px}
+.cropbox{background:white;padding:18px;border-radius:10px;max-width:700px;width:100%;max-height:95%;overflow:auto}
+#cropImage{max-width:100%;display:block;margin:12px auto}
+footer{max-width:1500px;margin:0 auto 20px;padding:0 16px;color:var(--muted);font-size:12px}
+@media(max-width:900px){.app{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.panel{margin:0}#editor{padding:15mm 12mm}}
+@media print{
+ @page{size:A4;margin:20mm}
+ body{background:white}
+ header,.toolbar,.side,footer{display:none!important}
+ .app{display:block;margin:0;padding:0;max-width:none}
+ #editor{border:0;box-shadow:none;max-width:none;width:auto;min-height:0;padding:0;margin:0;overflow:visible}
+ #editor table{break-inside:auto}#editor tr{break-inside:avoid}
+ #editor img{max-width:100%}
+}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+</head>
+<body>
+<header><div><h1>Rich Document Studio</h1><small>Paste • Format • Preview • Export PDF / DOCX</small></div><div><button id="newBtn">New document</button> <button id="previewBtn" class="primary">Preview</button> <button id="pdfBtn" class="primary">Export PDF</button> <button id="docxBtn" class="primary">Export DOCX</button></div></header>
+<div class="app">
+<main>
+ <div class="toolbar" aria-label="Formatting toolbar">
+  <button data-cmd="undo" title="Undo">↶</button><button data-cmd="redo" title="Redo">↷</button><span class="separator"></span>
+  <select id="fontName" title="Font family"><option value="Arial">Arial</option><option value="Calibri">Calibri</option><option value="Times New Roman">Times New Roman</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="Noto Sans Oriya">Noto Sans Oriya</option><option value="Noto Serif Oriya">Noto Serif Oriya</option><option value="Nirmala UI">Nirmala UI</option></select>
+  <select id="fontSize" title="Font size"><option value="2">10 pt</option><option value="3" selected>12 pt</option><option value="4">14 pt</option><option value="5">18 pt</option><option value="6">24 pt</option><option value="7">36 pt</option></select>
+  <button data-cmd="bold"><b>B</b></button><button data-cmd="italic"><i>I</i></button><button data-cmd="underline"><u>U</u></button><button data-cmd="strikeThrough"><s>S</s></button><span class="separator"></span>
+  <label title="Text colour"><input type="color" id="foreColor" value="#172033"></label><label title="Highlight"><input type="color" id="hiliteColor" value="#fff2a8"></label>
+  <button data-cmd="justifyLeft" title="Align left">☰←</button><button data-cmd="justifyCenter" title="Center">☰</button><button data-cmd="justifyRight" title="Align right">→☰</button><button data-cmd="justifyFull" title="Justify">☷</button>
+  <button data-cmd="insertUnorderedList" title="Bullets">• List</button><button data-cmd="insertOrderedList" title="Numbering">1. List</button>
+  <select id="blockFormat" title="Paragraph style"><option value="P">Paragraph</option><option value="H1">Heading 1</option><option value="H2">Heading 2</option><option value="H3">Heading 3</option><option value="BLOCKQUOTE">Quote</option></select>
+  <span class="separator"></span><button id="linkBtn">Link</button><button id="tableBtn">Insert table</button><button id="imageBtn">Image</button><input id="imageFile" type="file" accept="image/*" hidden>
+  <span class="status" id="saveStatus">Auto-save ready</span>
+ </div>
+ <div id="editor" contenteditable="true" spellcheck="true" aria-label="Document editor"><h2 style="text-align:center">ଆପଣଙ୍କ ଡକ୍ୟୁମେଣ୍ଟ ଏଠାରେ ଆରମ୍ଭ କରନ୍ତୁ</h2><p>ଏଠାରେ ଟେକ୍ସଟ୍ ପେଷ୍ଟ କରନ୍ତୁ କିମ୍ବା ଟାଇପ୍ କରନ୍ତୁ। ChatGPT ରୁ କପି କରାଯାଇଥିବା ଫର୍ମାଟେଡ୍ ଟେକ୍ସଟ୍ ଓ ଟେବୁଲ୍ ପେଷ୍ଟ କରିବାକୁ ଚେଷ୍ଟା କରନ୍ତୁ।</p></div>
+</main>
+<aside class="side">
+ <section class="panel"><h3>ପୃଷ୍ଠା ସେଟିଂ</h3><label>Paper size</label><select id="paper"><option value="A4">A4 (210 × 297 mm)</option><option value="Letter">Letter</option></select><label>Page margins (mm)</label>
+ <div class="row"><div><label for="marginTop">Top</label><input id="marginTop" type="number" min="0" max="60" value="20"></div><div><label for="marginBottom">Bottom</label><input id="marginBottom" type="number" min="0" max="60" value="20"></div></div>
+ <div class="row"><div><label for="marginLeft">Left</label><input id="marginLeft" type="number" min="0" max="60" value="20"></div><div><label for="marginRight">Right</label><input id="marginRight" type="number" min="0" max="60" value="20"></div></div>
+ <p class="hint">Top, Bottom, Left ଓ Right margin ଅଲଗା ଅଲଗା ଭାବେ mm ରେ ସେଟ୍ କରନ୍ତୁ। PDF ଓ DOCX export ରେ ଏହି ସେଟିଂ ବ୍ୟବହାର ହେବ।</p></section>
+ <section class="panel"><h3>ଚିତ୍ର ସେଟିଂ</h3><label>ଚିତ୍ର ଚୟନ କରି Insert କରନ୍ତୁ</label><button id="chooseImage" class="primary" style="width:100%">Choose image</button><label>ଚିତ୍ରର ଆକାର</label><div class="row"><input id="imgWidth" type="number" min="1" max="180" placeholder="Width mm"><input id="imgHeight" type="number" min="1" max="250" placeholder="Height mm"></div><button id="applyImageSize" style="width:100%;margin-top:7px">Apply size to selected image</button><p class="hint">ଚିତ୍ର ଉପରେ କ୍ଲିକ୍ କରି Crop / Resize କରନ୍ତୁ।</p></section>
+ <section class="panel"><h3>ଟେବୁଲ୍</h3><div class="row"><div><label>Rows</label><input id="rows" type="number" min="1" max="30" value="3"></div><div><label>Columns</label><input id="cols" type="number" min="1" max="15" value="3"></div></div><button id="insertTable" style="width:100%;margin-top:8px">Insert table at cursor</button><p class="hint">କପି କରାଯାଇଥିବା HTML ଟେବୁଲ୍‌ର border, cell alignment, colspan/rowspan ଇତ୍ୟାଦିକୁ ଯଥାସମ୍ଭବ ରଖାଯାଏ।</p></section>
+ <section class="panel"><h3>ଡ୍ରାଫ୍ଟ</h3><button id="saveNow" style="width:100%">Save now</button><button id="restoreBtn" style="width:100%;margin-top:7px">Restore saved draft</button><button id="clearDraft" style="width:100%;margin-top:7px">Delete saved draft</button><p class="hint">Auto-save ଏହି ବ୍ରାଉଜରର local storage ରେ ହୁଏ। ଅନ୍ୟ ଡିଭାଇସ୍‌କୁ ନିଜେ ଯାଏ ନାହିଁ।</p></section>
+</aside>
+</div>
+<footer>ଟିପ୍ପଣୀ: ମୂଳ ଆପ୍‌ରେ ପେଷ୍ଟ ହୋଇଥିବା HTML ଫର୍ମାଟିଂକୁ ରଖିବାକୁ ଚେଷ୍ଟା କରାଯାଏ। ଜଟିଳ nested/merged table, ବାହାରର font ଓ DOCX conversion ବ୍ରାଉଜର/Word ଅନୁସାରେ କିଛି ଭିନ୍ନ ହୋଇପାରେ। ଆବଶ୍ୟକ font ଡିଭାଇସ୍‌ରେ install ଥିବା ଦରକାର।</footer>
+
+<div id="previewModal"><div class="modal"><div class="modalhead"><b>Print preview</b><div><button id="printFromPreview" class="primary">Print / Save PDF</button> <button id="closePreview">Close</button></div></div><iframe id="previewFrame"></iframe></div></div>
+<div id="cropModal"><div class="cropbox"><h3>Crop image</h3><img id="cropImage" alt="Crop preview"><div class="row"><button id="cropApply" class="primary">Apply crop</button><button id="cropCancel">Cancel</button></div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] },
+  chtml: { scale: 1 }
+};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.3.1/html-docx.js"></script>
+<script>
+const editor=document.getElementById('editor'), statusEl=document.getElementById('saveStatus');
+let selectedImage=null,cropper=null,saveTimer=null;
+const STORAGE_KEY='richDocumentStudioDraftV1';
+function focusEditor(){editor.focus()}
+function exec(cmd,val=null){focusEditor();document.execCommand(cmd,false,val);scheduleSave()}
+document.querySelectorAll('[data-cmd]').forEach(b=>b.addEventListener('click',()=>exec(b.dataset.cmd)));
+document.getElementById('fontName').onchange=e=>exec('fontName',e.target.value);
+document.getElementById('fontSize').onchange=e=>exec('fontSize',e.target.value);
+document.getElementById('foreColor').oninput=e=>exec('foreColor',e.target.value);
+document.getElementById('hiliteColor').oninput=e=>{focusEditor();document.execCommand('hiliteColor',false,e.target.value);scheduleSave()};
+document.getElementById('blockFormat').onchange=e=>exec('formatBlock','<'+e.target.value+'>');
+document.getElementById('linkBtn').onclick=()=>{let u=prompt('Link URL (https://...)');if(u)exec('createLink',u)};
+function insertTable(){
+ let r=Math.max(1,Math.min(30,+document.getElementById('rows').value||3)),c=Math.max(1,Math.min(15,+document.getElementById('cols').value||3));
+ let t=document.createElement('table');t.style.borderCollapse='collapse';t.style.width='100%';
+ for(let i=0;i<r;i++){let tr=t.insertRow();for(let j=0;j<c;j++){let td=tr.insertCell();td.innerHTML='&nbsp;';td.style.border='1px solid #555';td.style.padding='6px';}}
+ focusEditor();document.execCommand('insertHTML',false,t.outerHTML+'<p><br></p>');scheduleSave()
+}
+document.getElementById('insertTable').onclick=insertTable;document.getElementById('tableBtn').onclick=insertTable;
+function chooseImage(){document.getElementById('imageFile').click()}
+document.getElementById('imageBtn').onclick=chooseImage;document.getElementById('chooseImage').onclick=chooseImage;
+document.getElementById('imageFile').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ const reader=new FileReader();reader.onload=()=>{let img=document.createElement('img');img.src=reader.result;img.style.maxWidth='100%';img.style.height='auto';img.dataset.original='1';focusEditor();document.execCommand('insertHTML',false,img.outerHTML+'<p><br></p>');scheduleSave();e.target.value=''};reader.readAsDataURL(f)
+};
+editor.addEventListener('click',e=>{if(e.target.tagName==='IMG'){selectedImage=e.target;document.getElementById('imgWidth').value=Math.round(selectedImage.getBoundingClientRect().width/3.7795);document.getElementById('imgHeight').value=Math.round(selectedImage.getBoundingClientRect().height/3.7795);openCropper(selectedImage)}});
+document.getElementById('applyImageSize').onclick=()=>{
+ if(!selectedImage){alert('ପ୍ରଥମେ ଡକ୍ୟୁମେଣ୍ଟର ଏକ ଚିତ୍ର ଉପରେ କ୍ଲିକ୍ କରନ୍ତୁ।');return}
+ const w=+document.getElementById('imgWidth').value,h=+document.getElementById('imgHeight').value;
+ if(w>0)selectedImage.style.width=w+'mm';if(h>0)selectedImage.style.height=h+'mm';selectedImage.style.maxWidth='100%';scheduleSave()
+};
+function openCropper(img){
+ if(!window.Cropper)return;
+ document.getElementById('cropImage').src=img.src;document.getElementById('cropModal').style.display='grid';
+ if(cropper)cropper.destroy();cropper=new Cropper(document.getElementById('cropImage'),{viewMode:1,autoCropArea:1,background:false});
+}
+document.getElementById('cropApply').onclick=()=>{
+ if(!cropper||!selectedImage)return;selectedImage.src=cropper.getCroppedCanvas({maxWidth:3000,maxHeight:3000}).toDataURL('image/png');cropper.destroy();cropper=null;document.getElementById('cropModal').style.display='none';scheduleSave()
+};
+document.getElementById('cropCancel').onclick=()=>{if(cropper)cropper.destroy();cropper=null;document.getElementById('cropModal').style.display='none'};
+function scheduleSave(){statusEl.textContent='Saving…';clearTimeout(saveTimer);saveTimer=setTimeout(saveDraft,700)}
+function getMargins(){return {top:+document.getElementById('marginTop').value||0,bottom:+document.getElementById('marginBottom').value||0,left:+document.getElementById('marginLeft').value||0,right:+document.getElementById('marginRight').value||0}}
+function applyEditorMargins(){const m=getMargins();editor.style.padding=`${m.top}mm ${m.right}mm ${m.bottom}mm ${m.left}mm`}
+function saveDraft(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({html:editor.innerHTML,paper:document.getElementById('paper').value,margins:getMargins(),updated:new Date().toISOString()}));statusEl.textContent='Saved ✓'}catch(e){statusEl.textContent='Save failed (storage full)'}}
+editor.addEventListener('input',scheduleSave);
+
+// Smart Paste: keep rich HTML when the clipboard contains real formatting.
+// If the clipboard contains Markdown/LaTeX source (as in copied ChatGPT text),
+// convert Markdown to HTML and let MathJax typeset the equations.
+function looksLikeMarkdown(raw) {
+ const t = raw.trim();
+ return /(^|\n)\s{0,3}#{1,6}\s/.test(t) ||
+        /\*\*[^*]+\*\*|__[^_]+__|(^|\n)\s*[-*]\s+|(^|\n)\s*\d+\.\s+/.test(t) ||
+        /\$\$[\s\S]+?\$\$|\$[^$\n]+\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)/.test(t) ||
+        /(^|\n)\s*---+\s*(\n|$)/.test(t);
+}
+function cleanPastedHtml(html) {
+ const doc = new DOMParser().parseFromString(html, 'text/html');
+ doc.querySelectorAll('script,iframe,object,embed,meta,link').forEach(n => n.remove());
+ doc.querySelectorAll('*').forEach(el => {
+   [...el.attributes].forEach(a => {
+     if (/^on/i.test(a.name) || (a.name === 'href' || a.name === 'src') && /^\s*javascript:/i.test(a.value)) el.removeAttribute(a.name);
+   });
+ });
+ return doc.body.innerHTML;
+}
+async function typesetEditor(target=editor) {
+ if (window.MathJax && MathJax.typesetPromise) {
+   try { await MathJax.typesetPromise([target]); } catch (err) { console.warn('MathJax typesetting issue:', err); }
+ }
+}
+editor.addEventListener('paste', async e => {
+ const cd = e.clipboardData;
+ if (!cd) return;
+ const plain = cd.getData('text/plain') || '';
+ const html = cd.getData('text/html') || '';
+ const htmlLooksLikeRawMarkdown = html && looksLikeMarkdown(new DOMParser().parseFromString(html, 'text/html').body.textContent || '');
+ let content = '';
+ if (html && !htmlLooksLikeRawMarkdown) {
+   content = cleanPastedHtml(html);
+ } else if (plain && window.marked && looksLikeMarkdown(plain)) {
+   content = marked.parse(plain, { gfm: true, breaks: true });
+ } else if (html) {
+   content = cleanPastedHtml(html);
+ } else if (plain) {
+   // Preserve paragraph/line breaks even for ordinary unformatted copied text.
+   content = plain.split(/\n{2,}/).map(part => '<p>' + part.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>') + '</p>').join('');
+ }
+ if (!content) return;
+ e.preventDefault();
+ focusEditor();
+ document.execCommand('insertHTML', false, content);
+ await typesetEditor();
+ scheduleSave();
+});
+editor.addEventListener('input', () => { typesetEditor(); scheduleSave(); });
+document.getElementById('saveNow').onclick=saveDraft;
+document.getElementById('restoreBtn').onclick=()=>{let d=localStorage.getItem(STORAGE_KEY);if(!d){alert('କୌଣସି saved draft ମିଳିଲା ନାହିଁ।');return}try{d=JSON.parse(d);editor.innerHTML=d.html||'';document.getElementById('paper').value=d.paper||'A4';if(typeof d.margins==='object'){for(const k of ['top','bottom','left','right'])document.getElementById('margin'+k[0].toUpperCase()+k.slice(1)).value=d.margins[k]??20}else{for(const k of ['Top','Bottom','Left','Right'])document.getElementById('margin'+k).value=d.margins||20}applyEditorMargins();statusEl.textContent='Draft restored ✓'}catch(e){alert('Draft ପଢ଼ିବାରେ ସମସ୍ୟା ହେଲା।')}};
+document.getElementById('clearDraft').onclick=()=>{if(confirm('Saved draft ଡିଲିଟ୍ କରିବେ?')){localStorage.removeItem(STORAGE_KEY);statusEl.textContent='Draft deleted'}};
+document.getElementById('newBtn').onclick=()=>{if(confirm('ନୂଆ ଡକ୍ୟୁମେଣ୍ଟ ଆରମ୍ଭ କରିବେ? ପ୍ରଥମେ ଡ୍ରାଫ୍ଟ save କରନ୍ତୁ।')){editor.innerHTML='<p><br></p>';scheduleSave()}};
+function documentHTML(){let paper=document.getElementById('paper').value,m=getMargins();let mathStyles=[...document.querySelectorAll('style')].filter(x=>x.textContent.includes('mjx-container')||x.hasAttribute('data-mjx')).map(x=>x.outerHTML).join('');return `<!DOCTYPE html><html><head><meta charset="utf-8">${mathStyles}<style>@page{size:${paper};margin:${m.top}mm ${m.right}mm ${m.bottom}mm ${m.left}mm}body{font-family:Arial,"Noto Sans Oriya",sans-serif;font-size:12pt;color:#172033}table{border-collapse:collapse;max-width:100%}td,th{vertical-align:top}img{max-width:100%;height:auto}p{orphans:2;widows:2}tr{break-inside:avoid}mjx-container{font-size:1em!important}</style></head><body>${editor.innerHTML}</body></html>`}
+function showPreview(){let frame=document.getElementById('previewFrame');frame.srcdoc=documentHTML();document.getElementById('previewModal').style.display='block'}
+document.getElementById('previewBtn').onclick=showPreview;document.getElementById('closePreview').onclick=()=>document.getElementById('previewModal').style.display='none';
+document.getElementById('printFromPreview').onclick=()=>{let f=document.getElementById('previewFrame');f.contentWindow.focus();f.contentWindow.print()};
+document.getElementById('pdfBtn').onclick=()=>{showPreview();setTimeout(()=>{let f=document.getElementById('previewFrame');f.onload=()=>{f.contentWindow.focus();f.contentWindow.print()};},100)};
+document.getElementById('docxBtn').onclick=()=>{
+ if(!window.htmlDocx||!htmlDocx.asBlob){alert('DOCX library load ହୋଇନାହିଁ। Internet connection ଯାଞ୍ଚ କରନ୍ତୁ।');return}
+ try{let blob=htmlDocx.asBlob(documentHTML());let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-document.docx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}catch(e){alert('DOCX export ହୋଇପାରିଲା ନାହିଁ: '+e.message)}
+};
+document.getElementById('paper').onchange=()=>{scheduleSave()};
+['marginTop','marginBottom','marginLeft','marginRight'].forEach(id=>document.getElementById(id).oninput=()=>{applyEditorMargins();scheduleSave()});
+window.addEventListener('beforeunload',saveDraft);
+try{let d=localStorage.getItem(STORAGE_KEY);if(d){d=JSON.parse(d);if(d.html){editor.innerHTML=d.html;document.getElementById('paper').value=d.paper||'A4';if(typeof d.margins==='object'&&d.margins){for(const k of ['top','bottom','left','right'])document.getElementById('margin'+k[0].toUpperCase()+k.slice(1)).value=d.margins[k]??20}else if(d.margins){for(const k of ['Top','Bottom','Left','Right'])document.getElementById('margin'+k).value=d.margins}applyEditorMargins();statusEl.textContent='Previous draft restored ✓';setTimeout(()=>typesetEditor(),500)}}}catch(e){}
+</script>
+</body></html>
