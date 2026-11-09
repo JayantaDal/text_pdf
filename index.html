@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rich Document Studio</title>
+<title>Document Studio</title>
 <style>
 :root{--ink:#172033;--muted:#667085;--line:#d9dee8;--accent:#315efb;--bg:#f3f5f9}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Arial,"Noto Sans Oriya",sans-serif}
@@ -49,7 +49,7 @@ footer{max-width:1500px;margin:0 auto 20px;padding:0 16px;color:var(--muted);fon
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
 </head>
 <body>
-<header><div><h1>Rich Document Studio</h1><small>Paste • Format • Preview • Export PDF / DOCX</small></div><div><button id="newBtn">New document</button> <button id="previewBtn" class="primary">Preview</button> <button id="pdfBtn" class="primary">Export PDF</button> <button id="docxBtn" class="primary">Export DOCX</button></div></header>
+<header><div><h1>Document Studio</h1><small>Paste • Format • Preview • Export PDF / DOCX</small></div><div><button id="newBtn">New document</button> <button id="previewBtn" class="primary">Preview</button> <button id="pdfBtn" class="primary">Export PDF</button> <button id="docxBtn" class="primary">Export DOCX</button></div></header>
 <div class="app">
 <main>
  <div class="toolbar" aria-label="Formatting toolbar">
@@ -76,7 +76,7 @@ footer{max-width:1500px;margin:0 auto 20px;padding:0 16px;color:var(--muted);fon
  <section class="panel"><h3>ଡ୍ରାଫ୍ଟ</h3><button id="saveNow" style="width:100%">Save now</button><button id="restoreBtn" style="width:100%;margin-top:7px">Restore saved draft</button><button id="clearDraft" style="width:100%;margin-top:7px">Delete saved draft</button><p class="hint">Auto-save ଏହି ବ୍ରାଉଜରର local storage ରେ ହୁଏ। ଅନ୍ୟ ଡିଭାଇସ୍‌କୁ ନିଜେ ଯାଏ ନାହିଁ।</p></section>
 </aside>
 </div>
-<footer>ଟିପ୍ପଣୀ: ମୂଳ ଆପ୍‌ରେ ପେଷ୍ଟ ହୋଇଥିବା HTML ଫର୍ମାଟିଂକୁ ରଖିବାକୁ ଚେଷ୍ଟା କରାଯାଏ। ଜଟିଳ nested/merged table, ବାହାରର font ଓ DOCX conversion ବ୍ରାଉଜର/Word ଅନୁସାରେ କିଛି ଭିନ୍ନ ହୋଇପାରେ। ଆବଶ୍ୟକ font ଡିଭାଇସ୍‌ରେ install ଥିବା ଦରକାର।</footer>
+<footer>Jayanta Kumar</footer>
 
 <div id="previewModal"><div class="modal"><div class="modalhead"><b>Print preview</b><div><button id="printFromPreview" class="primary">Print / Save PDF</button> <button id="closePreview">Close</button></div></div><iframe id="previewFrame"></iframe></div></div>
 <div id="cropModal"><div class="cropbox"><h3>Crop image</h3><img id="cropImage" alt="Crop preview"><div class="row"><button id="cropApply" class="primary">Apply crop</button><button id="cropCancel">Cancel</button></div></div></div>
